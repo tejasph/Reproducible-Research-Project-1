@@ -105,17 +105,11 @@ I then created a function that takes the "Steps" column variable (from TotalStep
 library(ggplot2)
 StepTotalHist <- function(StepTotalFrame){
       g <- ggplot(data = StepTotalFrame, aes(StepTotal)) +
-            geom_histogram(binwidth = 1000, color = "black", fill = "pink") + ggtitle("Total Steps Per Day") + ylim(0,10) + scale_y_discrete(breaks = c(1:10))
+            geom_histogram(binwidth = 1000, color = "black", fill = "pink") + ggtitle("Total Steps Per Day") + ylim(0,10)
       return(g)
 }
 
 HistogramStepTotal <- StepTotalHist(TotalStep)
-```
-
-    ## Scale for 'y' is already present. Adding another scale for 'y', which
-    ## will replace the existing scale.
-
-``` r
 print(HistogramStepTotal)
 ```
 
@@ -146,3 +140,51 @@ print(paste("Median Steps/Day:" , StepMedian <- CalculateMedian(TotalStep$StepTo
 ```
 
     ## [1] "Median Steps/Day: 10765"
+
+Task 4: Create a time-series plot of the average number of steps taken, across all days
+---------------------------------------------------------------------------------------
+
+We will go back to using our original ActivityFile data table for this task. I created a function to perform tasks that are similar to what was done for task 2. The difference is that we need to group by interval and take an average value.
+
+``` r
+AvgStepsPerInterval <- function(ActivityFrame){
+      ActivityFrame <- filter(ActivityFrame, is.na(Steps) == FALSE) %>%
+            group_by(Interval) %>%summarise(mean(Steps))
+      
+      names(ActivityFrame) <- c("Interval", "StepMean")
+      ActivityFrame
+}
+
+MeanStepPerInterval <- AvgStepsPerInterval(ActivityFile)
+head(MeanStepPerInterval)
+```
+
+    ## # A tibble: 6 x 2
+    ##   Interval StepMean
+    ##      <int>    <dbl>
+    ## 1        0   1.72  
+    ## 2        5   0.340 
+    ## 3       10   0.132 
+    ## 4       15   0.151 
+    ## 5       20   0.0755
+    ## 6       25   2.09
+
+Using the time interval as th x-variable and the mean steps as the y-variable, we will create a time-series plot (type = "l").
+
+``` r
+with(MeanStepPerInterval, plot(Interval, StepMean, type = "l"))
+```
+
+![](Reproducible_Research_Project_1_files/figure-markdown_github/unnamed-chunk-8-1.png)
+
+Task 5: Find the time interval with the higest average step value
+=================================================================
+
+``` r
+print(MeanStepPerInterval[which.max(MeanStepPerInterval$StepMean),])
+```
+
+    ## # A tibble: 1 x 2
+    ##   Interval StepMean
+    ##      <int>    <dbl>
+    ## 1      835     206.

@@ -31,6 +31,13 @@ CalculateMedian <- function(StepVector){
       MedianSteps <- median(StepVector)
 }
 
+AvgStepsPerInterval <- function(ActivityFrame){
+      ActivityFrame <- filter(ActivityFrame, is.na(Steps) == FALSE) %>% group_by(Interval) %>%
+            summarise(mean(Steps))
+      names(ActivityFrame) <- c("Interval", "StepMean")
+      ActivityFrame
+}
+
 #Main:
 
 #Task 1: Read in Data and Process
@@ -43,3 +50,6 @@ TotalSteps <- StepSumPerDay(ActivityFile)
 #Task 3: Calculate the mean and median of the total steps taken per day. 
 StepMean <- CalculateMean(TotalSteps$StepTotal)
 StepMedian <- CalculateMedian(TotalSteps$StepTotal)
+
+#Task 4: Time series plot of the avg number of steps taken
+MeanStepPerInterval <- AvgStepsPerInterval(ActivityFile)

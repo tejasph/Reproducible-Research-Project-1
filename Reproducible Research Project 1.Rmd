@@ -88,4 +88,32 @@ CalculateMedian <- function(StepVector){
 print(paste("Median Steps/Day:" , StepMedian <- CalculateMedian(TotalStep$StepTotal)))
 ```
 
+##Task 4: Create a time-series plot of the average number of steps taken, across all days
+
+We will go back to using our original ActivityFile data table for this task. I created a function to perform tasks that are similar to what was done for task 2. The difference is that we need to group by interval and take an average value.
+
+```{r}
+AvgStepsPerInterval <- function(ActivityFrame){
+      ActivityFrame <- filter(ActivityFrame, is.na(Steps) == FALSE) %>%
+            group_by(Interval) %>%summarise(mean(Steps))
+      
+      names(ActivityFrame) <- c("Interval", "StepMean")
+      ActivityFrame
+}
+
+MeanStepPerInterval <- AvgStepsPerInterval(ActivityFile)
+head(MeanStepPerInterval)
+```
+
+Using the time interval as th x-variable and the mean steps as the y-variable, we will create a time-series plot (type = "l").
+
+```{r}
+with(MeanStepPerInterval, plot(Interval, StepMean, type = "l"))
+```
+
+#Task 5: Find the time interval with the higest average step value
+
+```{r}
+print(MeanStepPerInterval[which.max(MeanStepPerInterval$StepMean),])
+```
 
