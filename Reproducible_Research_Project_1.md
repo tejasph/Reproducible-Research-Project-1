@@ -4,17 +4,32 @@ Reproducible Research Project 1
 Introducing the Project
 -----------------------
 
-In this project, we will be analyzing an anonymous individual's walking routine over the following time interval: *October 1st 2012 - November 30th 2012*. Specifically, we will assess the number of steps taken over five minute interval measurements.
+In this project, we will be analyzing an anonymous individual's walking routine over the following time interval: **October 1st 2012 - November 30th 2012**. Specifically, we will assess the number of steps taken over five minute interval measurements.
 
-Reading the CSV file
---------------------
+Task 1: Reading the CSV file
+----------------------------
 
 The "activity.csv" file that was provided by Coursera is already relatively easy to work with. I created the following function to read the file into my workspace:
 
 ``` r
 #set appropriate working directory (location depends on individual)
 setwd("~/R Material/Coursera/Course 5 Reproducible Research/Week 1/repdata_data_activity")
+#Activate dplyr
+library(dplyr)
+```
 
+    ## 
+    ## Attaching package: 'dplyr'
+
+    ## The following objects are masked from 'package:stats':
+    ## 
+    ##     filter, lag
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     intersect, setdiff, setequal, union
+
+``` r
 #Read in csv file, cleaning up column names and coercing 2nd column into a Date class
 ReadFile <- function(){
       return(read.csv("activity.csv", colClasses = c("integer","Date", "integer"),
@@ -47,3 +62,87 @@ summary(ActivityFile)
     ##  3rd Qu.: 12.00   3rd Qu.:2012-11-15   3rd Qu.:1766.2  
     ##  Max.   :806.00   Max.   :2012-11-30   Max.   :2355.0  
     ##  NA's   :2304
+
+There are 2304 NA values for the Steps column, so we will keep this in mind when we move forward with the analysis.
+
+Task 2: Create histogram for the total number of steps per day
+--------------------------------------------------------------
+
+For this calculation, we will ignore rows containing NA values. Using the cleaned ActivityFile data table as an *arguement*, I created two functions to first calcuate the total steps per day, and then create a histogram representation.
+
+``` r
+#Function takes our ActivityFile data table as an arguement to calculate total steps/day
+StepSumPerDay <- function(ActivityFrame){
+      #filter out rows with NA values, group by Day, and then calculate sum per day
+      ActivityFrame <- filter(ActivityFrame, is.na(Steps) == FALSE) %>% group_by(Date) %>%
+            summarise(sum(Steps))
+      #Clean up variable names
+      names(ActivityFrame) <- c("Date", "StepTotal")
+      ActivityFrame
+}
+```
+
+When I call this function we will get the appropriate table of **total steps per day**
+
+``` r
+TotalStep <- StepSumPerDay(ActivityFile)
+head(TotalStep)
+```
+
+    ## # A tibble: 6 x 2
+    ##   Date       StepTotal
+    ##   <date>         <int>
+    ## 1 2012-10-02       126
+    ## 2 2012-10-03     11352
+    ## 3 2012-10-04     12116
+    ## 4 2012-10-05     13294
+    ## 5 2012-10-06     15420
+    ## 6 2012-10-07     11015
+
+I then created a function that takes the "Steps" column variable (from TotalStep) and plotted a histogram spread, utilizing the ggplot2 package
+
+``` r
+library(ggplot2)
+StepTotalHist <- function(StepTotalFrame){
+      g <- ggplot(data = StepTotalFrame, aes(StepTotal)) +
+            geom_histogram(binwidth = 1000, color = "black", fill = "pink") + ggtitle("Total Steps Per Day") + ylim(0,10) + scale_y_discrete(breaks = c(1:10))
+      return(g)
+}
+
+HistogramStepTotal <- StepTotalHist(TotalStep)
+```
+
+    ## Scale for 'y' is already present. Adding another scale for 'y', which
+    ## will replace the existing scale.
+
+``` r
+print(HistogramStepTotal)
+```
+
+![](Reproducible_Research_Project_1_files/figure-markdown_github/unnamed-chunk-5-1.png)
+
+Task 3: Determine the mean and median values for steps/day
+----------------------------------------------------------
+
+For this task, I created two simple functions.
+
+``` r
+CalculateMean <- function(StepVector){
+      MeanSteps <- mean(StepVector)
+}
+
+print(paste("Mean Steps/Day:", StepMean <- CalculateMean(TotalStep$StepTotal)))
+```
+
+    ## [1] "Mean Steps/Day: 10766.1886792453"
+
+``` r
+CalculateMedian <- function(StepVector){
+      MedianSteps <- median(StepVector)
+}
+
+
+print(paste("Median Steps/Day:" , StepMedian <- CalculateMedian(TotalStep$StepTotal)))
+```
+
+    ## [1] "Median Steps/Day: 10765"
