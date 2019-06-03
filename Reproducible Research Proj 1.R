@@ -51,9 +51,12 @@ ImputeMissingValues <- function(StepVector, MeanStepVector){
 
 AvgStepWeekday <- function(ActivityFrame){
       ActivityFrame$Date <- weekdays(ActivityFrame$Date)
-      ActivityFrame <- filter(ActivityFrame, is.na(Steps) == FALSE) %>% group_by(Date,Interval) %>%
+      DetermineWeekday <-factor(grepl("S.+",as.character(ActivityFrame$Date)), 
+                                levels = c(TRUE,FALSE), labels = c("Weekend","Weekday"))
+      ActivityFrame <- mutate(ActivityFrame, wDay = DetermineWeekday) %>%
+            group_by(wDay,Interval) %>%
             summarise(mean(Steps))
-      names(ActivityFrame) <- c("Date", "Interval","StepMean")
+      names(ActivityFrame) <- c("wDay", "Interval","StepMean")
       ActivityFrame
       
 }
@@ -79,4 +82,4 @@ MergeFrame <- merge(ActivityFile, MeanStepPerInterval, by = "Interval")
 MergeFrame$Steps <- ImputeMissingValues(MergeFrame$Steps, MergeFrame$StepMean)
 
 #Task 8: Avg step per weekday
-AvgStepPerWeekday <- AvgStepWeekday(ActivityFile)
+AvgStepPerWeekday <- AvgStepWeekday(MergeFrame)

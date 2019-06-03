@@ -191,8 +191,8 @@ print(MeanStepPerInterval[which.max(MeanStepPerInterval$StepMean),])
 
 Therefore, we can conclude that in the interval of 800-835 minutes, the highest avg steps are taken. This agrees with our previous time-series plot.
 
-Task 6: Impute missing values
------------------------------
+Task 6 & 7: Impute missing values
+---------------------------------
 
 We already discussed the number of NA values (refer to Task 1). It can easily be found by using the summary() function. There were 2304 NA values. Now, our goal is to impute values for the missing data. For the sake of simplicity, any NA value will take the mean Step value for that given interval. First, I merged the Activity File with the MeanStepPerInterval into one big table.
 
@@ -281,3 +281,49 @@ print(paste("Imputed Median Steps/Day:", CalculateMean(ImputedTotalSteps$StepTot
     ## [1] "Imputed Median Steps/Day: 10766.1886792453       Median Steps/Day: 10765"
 
 Clearly, there are some difference when values are imputed.
+
+Task 8: Create a panel plot for steps per interval per day type (ie weekday or weekend)
+---------------------------------------------------------------------------------------
+
+The crucial part of this task is changing the Date format into a weekday type, along with the creation of two factors: Weekday and Weekend. For this task, we will use our imputed data frame: MergeFrame
+
+``` r
+AvgStepWeekday <- function(ActivityFrame){
+      #Change format into weekday type
+      ActivityFrame$Date <- weekdays(ActivityFrame$Date)
+      #create a new factor vector with two levels: Weekday and Weekend. Factors determined
+      #based on the spelling of the weekday name
+      DetermineWeekday <-factor(grepl("S.+",as.character(ActivityFrame$Date)), 
+                                levels = c(TRUE,FALSE), labels = c("Weekend","Weekday"))
+      #Add the factor vector as a column, group by the factor and interval, and find the         #mean
+      ActivityFrame <- mutate(ActivityFrame, wDay = DetermineWeekday) %>%
+            group_by(wDay,Interval) %>%
+            summarise(mean(Steps))
+      names(ActivityFrame) <- c("wDay", "Interval","StepMean")
+      ActivityFrame
+      
+}
+AvgStepPerWeekday <- AvgStepWeekday(MergeFrame)
+head(AvgStepPerWeekday)
+```
+
+    ## # A tibble: 6 x 3
+    ## # Groups:   wDay [1]
+    ##   wDay    Interval StepMean
+    ##   <fct>      <int>    <dbl>
+    ## 1 Weekend        0  0.215  
+    ## 2 Weekend        5  0.0425 
+    ## 3 Weekend       10  0.0165 
+    ## 4 Weekend       15  0.0189 
+    ## 5 Weekend       20  0.00943
+    ## 6 Weekend       25  3.51
+
+Next we will create a plot to represent the data, using the AvgStepPerWeekday data table.
+
+``` r
+PanelPlot <- ggplot(data = AvgStepPerWeekday, aes(Interval, StepMean)) + 
+      geom_line() + facet_grid(wDay~.) + ylab("Mean Steps")
+print(PanelPlot)
+```
+
+![](Reproducible_Research_Project_1_files/figure-markdown_github/unnamed-chunk-14-1.png)
