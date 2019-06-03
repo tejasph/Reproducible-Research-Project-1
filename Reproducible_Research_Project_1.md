@@ -103,13 +103,13 @@ I then created a function that takes the "Steps" column variable (from TotalStep
 
 ``` r
 library(ggplot2)
-StepTotalHist <- function(StepTotalFrame){
+StepTotalHist <- function(StepTotalFrame, Title){
       g <- ggplot(data = StepTotalFrame, aes(StepTotal)) +
-            geom_histogram(binwidth = 1000, color = "black", fill = "pink") + ggtitle("Total Steps Per Day") + ylim(0,10)
+            geom_histogram(binwidth = 1000, color = "black", fill = "pink") + ggtitle(Title) + ylim(0,10)
       return(g)
 }
 
-HistogramStepTotal <- StepTotalHist(TotalStep)
+HistogramStepTotal <- StepTotalHist(TotalStep, "Total Steps Per Day")
 print(HistogramStepTotal)
 ```
 
@@ -124,8 +124,8 @@ For this task, I created two simple functions.
 CalculateMean <- function(StepVector){
       MeanSteps <- mean(StepVector)
 }
-
-print(paste("Mean Steps/Day:", StepMean <- CalculateMean(TotalStep$StepTotal)))
+MeanSteps <- paste("Mean Steps/Day:",  CalculateMean(TotalStep$StepTotal))
+print(MeanSteps)
 ```
 
     ## [1] "Mean Steps/Day: 10766.1886792453"
@@ -135,8 +135,8 @@ CalculateMedian <- function(StepVector){
       MedianSteps <- median(StepVector)
 }
 
-
-print(paste("Median Steps/Day:" , StepMedian <- CalculateMedian(TotalStep$StepTotal)))
+StepMedian <- paste("Median Steps/Day:" ,  CalculateMedian(TotalStep$StepTotal))
+print(StepMedian)
 ```
 
     ## [1] "Median Steps/Day: 10765"
@@ -188,3 +188,96 @@ print(MeanStepPerInterval[which.max(MeanStepPerInterval$StepMean),])
     ##   Interval StepMean
     ##      <int>    <dbl>
     ## 1      835     206.
+
+Therefore, we can conclude that in the interval of 800-835 minutes, the highest avg steps are taken. This agrees with our previous time-series plot.
+
+Task 6: Impute missing values
+-----------------------------
+
+We already discussed the number of NA values (refer to Task 1). It can easily be found by using the summary() function. There were 2304 NA values. Now, our goal is to impute values for the missing data. For the sake of simplicity, any NA value will take the mean Step value for that given interval. First, I merged the Activity File with the MeanStepPerInterval into one big table.
+
+``` r
+MergeFrame <- merge(ActivityFile, MeanStepPerInterval, by = "Interval")
+head(MergeFrame)
+```
+
+    ##   Interval Steps       Date StepMean
+    ## 1        0    NA 2012-10-01 1.716981
+    ## 2        0     0 2012-11-23 1.716981
+    ## 3        0     0 2012-10-28 1.716981
+    ## 4        0     0 2012-11-06 1.716981
+    ## 5        0     0 2012-11-24 1.716981
+    ## 6        0     0 2012-11-15 1.716981
+
+Next we call a function that locates NA values and replaces them with the appropriate mean step value.
+
+``` r
+ImputeMissingValues <- function(StepVector, MeanStepVector){
+      for (i in c(1:length(StepVector))){
+            if (is.na(StepVector[i])== TRUE){
+                  StepVector[i] <- MeanStepVector[i]
+            }
+      }
+      StepVector
+
+}
+#Replace the Steps column with the appropriate imputed values
+MergeFrame$Steps <- ImputeMissingValues(MergeFrame$Steps, MergeFrame$StepMean)
+#Check whether it worked
+print(sum(is.na(MergeFrame$Steps)))
+```
+
+    ## [1] 0
+
+We will now call upon functions we previously created to create a histogram.
+
+``` r
+ImputedTotalSteps <- StepSumPerDay(select(MergeFrame, c(Steps,Date, Interval)))
+head(ImputedTotalSteps)
+```
+
+    ## # A tibble: 6 x 2
+    ##   Date       StepTotal
+    ##   <date>         <dbl>
+    ## 1 2012-10-01    10766.
+    ## 2 2012-10-02      126 
+    ## 3 2012-10-03    11352 
+    ## 4 2012-10-04    12116 
+    ## 5 2012-10-05    13294 
+    ## 6 2012-10-06    15420
+
+``` r
+ImputedHistogramStepTotal <- StepTotalHist(ImputedTotalSteps, "Total Steps Per Day (Imputed)")
+
+#Import GridExtra which is good for comparison plotting
+library(gridExtra)
+```
+
+    ## 
+    ## Attaching package: 'gridExtra'
+
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     combine
+
+``` r
+grid.arrange(HistogramStepTotal,ImputedHistogramStepTotal, ncol =2)
+```
+
+    ## Warning: Removed 1 rows containing missing values (geom_bar).
+
+![](Reproducible_Research_Project_1_files/figure-markdown_github/unnamed-chunk-12-1.png)
+
+``` r
+print(paste("Imputed Mean Steps/Day:", CalculateMean(ImputedTotalSteps$StepTotal), "     ",MeanSteps))
+```
+
+    ## [1] "Imputed Mean Steps/Day: 10766.1886792453       Mean Steps/Day: 10766.1886792453"
+
+``` r
+print(paste("Imputed Median Steps/Day:", CalculateMean(ImputedTotalSteps$StepTotal), "     ", StepMedian))
+```
+
+    ## [1] "Imputed Median Steps/Day: 10766.1886792453       Median Steps/Day: 10765"
+
+Clearly, there are some difference when values are imputed.

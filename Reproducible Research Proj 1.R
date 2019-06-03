@@ -38,6 +38,26 @@ AvgStepsPerInterval <- function(ActivityFrame){
       ActivityFrame
 }
 
+ImputeMissingValues <- function(StepVector, MeanStepVector){
+      for (i in c(1:length(StepVector))){
+            if (is.na(StepVector[i])== TRUE){
+                  StepVector[i] <- MeanStepVector[i]
+            }
+          
+      }
+      StepVector
+
+}
+
+AvgStepWeekday <- function(ActivityFrame){
+      ActivityFrame$Date <- weekdays(ActivityFrame$Date)
+      ActivityFrame <- filter(ActivityFrame, is.na(Steps) == FALSE) %>% group_by(Date,Interval) %>%
+            summarise(mean(Steps))
+      names(ActivityFrame) <- c("Date", "Interval","StepMean")
+      ActivityFrame
+      
+}
+
 #Main:
 
 #Task 1: Read in Data and Process
@@ -53,3 +73,10 @@ StepMedian <- CalculateMedian(TotalSteps$StepTotal)
 
 #Task 4: Time series plot of the avg number of steps taken
 MeanStepPerInterval <- AvgStepsPerInterval(ActivityFile)
+
+#Task 6: Method for imputing missing data
+MergeFrame <- merge(ActivityFile, MeanStepPerInterval, by = "Interval")
+MergeFrame$Steps <- ImputeMissingValues(MergeFrame$Steps, MergeFrame$StepMean)
+
+#Task 8: Avg step per weekday
+AvgStepPerWeekday <- AvgStepWeekday(ActivityFile)
